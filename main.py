@@ -14,17 +14,26 @@ def get_args():
     parser.add_argument('--momentum', dest="momentum", default=0.9, type=float, help="momentum (if applicable)")
     parser.add_argument('--weight-decay', dest="weight_decay", default=5e-4, type=float, help="weight decay (if applicable")
     parser.add_argument('--num-epochs', dest="num_epochs", default=10, type=int, help="number of epochs for test/train loops")
+    parser.add_argument('--scheduler', dest="scheduler", default=None, type=str, help="scheduler type for learning rate")
     return parser.parse_args()
 
-def get_optimizer(model, optimizer, lr, momentum, weight_decay):
-    if optimizer == "SGD":
+def get_optimizer(model, optimizer_type, lr, momentum, weight_decay):
+    if optimizer_type == "SGD":
         return optim.SGD(model.parameters(), lr=lr,
                       momentum=momentum, weight_decay=weight_decay)
     
-    elif optimizer == "Adam":
+    elif optimizer_type == "Adam":
         return optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     
-def train(model, iterator, optimizer, criterion, device):
+
+def get_scheduler(optimizer, scheduler_type):
+    if scheduler_type == "ExponentialLR":
+        return optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    elif scheduler_type == "MultiStepLR":
+        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.1)
+    
+    
+def train(model, iterator, optimizer, criterion, device, scheduler=None):
     model.train()
     epoch_loss = 0
     correct = 0
@@ -47,6 +56,8 @@ def train(model, iterator, optimizer, criterion, device):
         
         loss.backward()
         optimizer.step()
+        if scheduler:
+            scheduler.step()
             
     return epoch_loss / len(iterator), correct / total
 
@@ -100,38 +111,35 @@ def main():
     model = ResNet18().to(device)
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = get_optimizer(model, args.optimizer, args.lr, args.momentum, args.weight_decay)
+    scheduler = get_scheduler(optimizer, args.scheduler)
     
-    train_output_file_name = f"train_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}.csv"
-    test_output_file_name = f"test_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}.csv"
+    train_output_file_name = f"experiments/train_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
+    test_output_file_name = f"experiments/test_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
 
     
-    with open(train_output_file_name, 'w') as outfile:
-        fields = "epoch, train_loss, train_acc\n"
-        outfile.write(fields)
-    
-        for epoch in range(1, args.num_epochs+1):
-            print(f"Training loop for epoch: {epoch}")
-            
-            train_loss, train_acc = train(model, trainloader, optimizer, criterion, device)
-            
-            line = f"{epoch}, {train_loss}, {train_acc}\n"
-            outfile.write(line)
-            
-            
-    with open(test_output_file_name, 'w') as outfile:
-        fields = "epoch, test_loss, test_acc\n"
-        outfile.write(fields)
-    
-        for epoch in range(1, args.num_epochs+1):
-            print(f"Testing loop for epoch: {epoch}")
-            
-            test_loss, test_acc = test(model, testloader, criterion, device)
-            
-            line = f"{epoch}, {test_loss}, {test_acc}\n"
-            outfile.write(line)
+    with open(train_output_file_name, 'w') as train_outfile:
         
         
+        train_fields = "epoch, train_loss, train_acc\n"
+        train_outfile.write(train_fields)
+        
+        with open(test_output_file_name, 'w') as test_outfile:
+            test_fields = "epoch, test_loss, test_acc\n"
+            test_outfile.write(test_fields)
+            
+            
     
+            for epoch in range(1, args.num_epochs+1):
+                print(f"Epoch: {epoch}")
+                
+                train_loss, train_acc = train(model, trainloader, optimizer, criterion, device, scheduler=scheduler)                
+                train_line = f"{epoch}, {train_loss}, {train_acc}\n"
+                train_outfile.write(train_line)
+                
+                test_loss, test_acc = test(model, testloader, criterion, device)
+                test_line = f"{epoch}, {test_loss}, {test_acc}\n"
+                test_outfile.write(test_line)
+            
     
     
 if __name__ == "__main__":
