@@ -30,7 +30,7 @@ def get_scheduler(optimizer, scheduler_type):
     if scheduler_type == "ExponentialLR":
         return optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     elif scheduler_type == "MultiStepLR":
-        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.1)
+        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30], gamma=0.1)
     
     
 def train(model, iterator, optimizer, criterion, device, scheduler=None):
@@ -139,6 +139,8 @@ def main():
                 test_loss, test_acc = test(model, testloader, criterion, device)
                 test_line = f"{epoch}, {test_loss}, {test_acc}\n"
                 test_outfile.write(test_line)
+                
+                print(f"TRAIN ACC: {train_acc}, TEST ACC: {test_acc}")
             
     
     
