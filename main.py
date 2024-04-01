@@ -30,7 +30,7 @@ def get_scheduler(optimizer, scheduler_type):
     if scheduler_type == "ExponentialLR":
         return optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     elif scheduler_type == "MultiStepLR":
-        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30], gamma=0.1)
+        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25, 30], gamma=0.1)
     
     
 def train(model, iterator, optimizer, criterion, device, scheduler=None):
@@ -56,8 +56,8 @@ def train(model, iterator, optimizer, criterion, device, scheduler=None):
         
         loss.backward()
         optimizer.step()
-        if scheduler:
-            scheduler.step()
+    if scheduler:
+        scheduler.step()
             
     return epoch_loss / len(iterator), correct / total
 
@@ -112,6 +112,12 @@ def main():
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = get_optimizer(model, args.optimizer, args.lr, args.momentum, args.weight_decay)
     scheduler = get_scheduler(optimizer, args.scheduler)
+    
+    
+    n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"NUMBER OF PARAMS: {n_params}")
+    if (n_params > 5000000):
+        raise Exception(f"More than 5mil parameters!")
     
     train_output_file_name = f"experiments/train_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
     test_output_file_name = f"experiments/test_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
