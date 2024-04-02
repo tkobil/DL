@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument('--weight-decay', dest="weight_decay", default=5e-4, type=float, help="weight decay (if applicable")
     parser.add_argument('--num-epochs', dest="num_epochs", default=10, type=int, help="number of epochs for test/train loops")
     parser.add_argument('--scheduler', dest="scheduler", default=None, type=str, help="scheduler type for learning rate")
+    parser.add_argument('--save', dest="save", default=False, type=bool, help="save model or not")
     return parser.parse_args()
 
 def get_optimizer(model, optimizer_type, lr, momentum, weight_decay):
@@ -147,7 +148,9 @@ def main():
                 test_outfile.write(test_line)
                 
                 print(f"TRAIN ACC: {train_acc}, TEST ACC: {test_acc}")
-            
+                
+    if (args.save):
+        torch.save(model.state_dict(), f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.pt")
     
     
 if __name__ == "__main__":
