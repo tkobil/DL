@@ -29,7 +29,8 @@ def run_inference(model, device):
             if (i % 100) == 0:
                 print(i)
                 
-            input = torch.from_numpy(data[b'data'][i].reshape(3, 32, 32)).float().unsqueeze(dim=0).to(device)
+            input = data[b'data'][i].reshape(3, 32, 32) / 255 # normalize image
+            input = torch.from_numpy(input.astype('float32')).unsqueeze(dim=0).to(device)
             output = model(input)
             _, prediction = output.max(1)
             id = data[b'ids'][i]
@@ -48,9 +49,8 @@ def main():
     print(f"Using {device} device")
     
     model = ResNet18()
-    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0005_numepochs=8_scheduler=None.pt'))
+    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0001_numepochs=9_scheduler=ExponentialLR.pt'))
     model.to(device)
-    # data = preprocess_data()
     
     run_inference(model, device)
             
