@@ -49,7 +49,7 @@ def main():
     print(f"Using {device} device")
     
     model = ResNet18()
-    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0001_numepochs=9_scheduler=ExponentialLR.pt'))
+    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0005_numepochs=13_scheduler=ExpontentialLR_transform=True.pt'))
     model.to(device)
     
     run_inference(model, device)

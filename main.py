@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument('--weight-decay', dest="weight_decay", default=5e-4, type=float, help="weight decay (if applicable")
     parser.add_argument('--num-epochs', dest="num_epochs", default=10, type=int, help="number of epochs for test/train loops")
     parser.add_argument('--scheduler', dest="scheduler", default=None, type=str, help="scheduler type for learning rate")
+    parser.add_argument('--transform', dest="transform", default=False, type=bool, help="transform training data")
     parser.add_argument('--save', dest="save", default=False, type=bool, help="save model or not")
     return parser.parse_args()
 
@@ -31,8 +32,17 @@ def get_scheduler(optimizer, scheduler_type):
     if scheduler_type == "ExponentialLR":
         return optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     elif scheduler_type == "MultiStepLR":
-        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25, 30], gamma=0.1)
+        return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], gamma=0.9)
     
+def get_transform_train(transform):
+    if transform:
+        return torchvision.transforms.Compose([
+            torchvision.transforms.RandomCrop(32, padding=4),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.ToTensor(),
+        ])
+    else:
+        return torchvision.transforms.ToTensor()
     
 def train(model, iterator, optimizer, criterion, device, scheduler=None):
     model.train()
@@ -100,7 +110,7 @@ def main():
     
     # Load CIFAR10
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=ToTensor())
+        root='./data', train=True, download=True, transform=get_transform_train(args.transform))
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=128, shuffle=True)
 
@@ -120,8 +130,8 @@ def main():
     if (n_params > 5000000):
         raise Exception(f"More than 5mil parameters!")
     
-    train_output_file_name = f"experiments/train_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
-    test_output_file_name = f"experiments/test_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.csv"
+    train_output_file_name = f"experiments/train_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.csv"
+    test_output_file_name = f"experiments/test_run_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.csv"
 
     
     with open(train_output_file_name, 'w') as train_outfile:
@@ -150,7 +160,7 @@ def main():
                 print(f"TRAIN ACC: {train_acc}, TEST ACC: {test_acc}")
                 
     if (args.save):
-        torch.save(model.state_dict(), f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.pt")
+        torch.save(model.state_dict(), f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.pt")
     
 if __name__ == "__main__":
     main()
