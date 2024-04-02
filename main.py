@@ -152,6 +152,5 @@ def main():
     if (args.save):
         torch.save(model.state_dict(), f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}.pt")
     
-    
 if __name__ == "__main__":
     main()
