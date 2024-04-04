@@ -1,6 +1,7 @@
 import pickle
 import torch
 from model import ResNet18
+import torchvision
 
 def unpickle(file):
     with open(file, 'rb') as fo:
@@ -30,7 +31,9 @@ def run_inference(model, device):
                 print(i)
                 
             input = data[b'data'][i].reshape(3, 32, 32) / 255 # normalize image
-            input = torch.from_numpy(input.astype('float32')).unsqueeze(dim=0).to(device)
+            input = torch.from_numpy(input.astype('float32')).unsqueeze(dim=0)
+            transform = torchvision.transforms.Normalize((0.4915, 0.4823, .4468), (0.2470, 0.2435, 0.2616))
+            input = transform(input).to(device)
             output = model(input)
             _, prediction = output.max(1)
             id = data[b'ids'][i]
@@ -49,7 +52,7 @@ def main():
     print(f"Using {device} device")
     
     model = ResNet18()
-    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0005_numepochs=13_scheduler=ExpontentialLR_transform=True.pt'))
+    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0005_numepochs=22_scheduler=ExpontentialLR_transform=True.pt'))
     model.to(device)
     
     run_inference(model, device)

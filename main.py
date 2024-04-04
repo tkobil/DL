@@ -34,16 +34,19 @@ def get_scheduler(optimizer, scheduler_type):
     elif scheduler_type == "MultiStepLR":
         return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], gamma=0.9)
     
-def get_transform_train(transform):
+def get_transform(transform):
     if transform:
         return torchvision.transforms.Compose([
             torchvision.transforms.RandomCrop(32, padding=4),
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.4915, 0.4823, .4468), (0.2470, 0.2435, 0.2616)), # mean/std
         ])
     else:
         return torchvision.transforms.ToTensor()
+
     
+     
 def train(model, iterator, optimizer, criterion, device, scheduler=None):
     model.train()
     epoch_loss = 0
@@ -110,12 +113,12 @@ def main():
     
     # Load CIFAR10
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=get_transform_train(args.transform))
+        root='./data', train=True, download=True, transform=get_transform(args.transform))
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=128, shuffle=True)
 
     testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=ToTensor())
+        root='./data', train=False, download=True, transform=get_transform(args.transform))
     testloader = torch.utils.data.DataLoader(
         testset, batch_size=128, shuffle=False)
     
