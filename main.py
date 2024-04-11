@@ -29,7 +29,6 @@ def get_args():
     parser.add_argument('--num-epochs', dest="num_epochs", default=10, type=int, help="number of epochs for test/train loops")
     parser.add_argument('--scheduler', dest="scheduler", default=None, type=str, help="scheduler type for learning rate")
     parser.add_argument('--transform', dest="transform", default=False, type=bool, help="transform training data")
-    parser.add_argument('--save', dest="save", default=False, type=bool, help="save model or not")
     return parser.parse_args()
 
 def get_optimizer(model, optimizer_type, lr, momentum, weight_decay):
