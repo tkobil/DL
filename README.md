@@ -27,7 +27,7 @@ The following experiment options are available via command-line arguments:
 
 | CLI Arg | HyperParameter | Default | Options |
 | :-----: | :------------: | :-----: | :-----: |
-| --optimizer | optimizer  | SGD     | SGD, Adam |
+| --optimizer | optimizer  | SGD     | SGD, Adam, adadelta |
 | -- lr | learning rate | 0.03 | any float |
 | --momentum | momentum | 0.9 | any float |
 | --weight-decay | weight decay | 5e-4 | any float |
