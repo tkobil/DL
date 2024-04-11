@@ -27,6 +27,10 @@ def get_optimizer(model, optimizer_type, lr, momentum, weight_decay):
     elif optimizer_type == "Adam":
         return optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     
+    elif optimizer_type =="adadelta":
+        return optim.Adadelta(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    
 
 def get_scheduler(optimizer, scheduler_type):
     if scheduler_type == "ExponentialLR":
@@ -40,7 +44,7 @@ def get_transform(transform):
             torchvision.transforms.RandomCrop(32, padding=4),
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize((0.4915, 0.4823, .4468), (0.2470, 0.2435, 0.2616)), # mean/std
+            torchvision.transforms.Normalize((0.4914, 0.4822, .4465), (0.2023, 0.1994, 0.2010)), # mean/std
         ])
     else:
         return torchvision.transforms.ToTensor()
