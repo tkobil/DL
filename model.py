@@ -1,4 +1,5 @@
 # Adapted From https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
+# [1] Kuangliu. “Pytorch-Cifar/Models/Resnet.Py at Master · Kuangliu/Pytorch-CIFAR.” GitHub, github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py. Accessed 11 Apr. 2024. 
 
 import torch.nn.functional as F
 import torch.nn as nn
