@@ -5,7 +5,20 @@ from model import ResNet18
 import torch.optim as optim
 import torch
 import torch.nn as nn
+import os
 
+best_acc = 0 
+
+class AddGaussianNoise(object):
+    def __init__(self, mean=0., std=1.):
+        self.std = std
+        self.mean = mean
+        
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
 
 def get_args():
     parser = argparse.ArgumentParser(description="Training CIFAR10")
@@ -16,40 +29,39 @@ def get_args():
     parser.add_argument('--num-epochs', dest="num_epochs", default=10, type=int, help="number of epochs for test/train loops")
     parser.add_argument('--scheduler', dest="scheduler", default=None, type=str, help="scheduler type for learning rate")
     parser.add_argument('--transform', dest="transform", default=False, type=bool, help="transform training data")
-    parser.add_argument('--save', dest="save", default=False, type=bool, help="save model or not")
     return parser.parse_args()
 
 def get_optimizer(model, optimizer_type, lr, momentum, weight_decay):
     if optimizer_type == "SGD":
         return optim.SGD(model.parameters(), lr=lr,
                       momentum=momentum, weight_decay=weight_decay)
-    
     elif optimizer_type == "Adam":
         return optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    
     elif optimizer_type =="adadelta":
         return optim.Adadelta(model.parameters(), lr=lr, weight_decay=weight_decay)
-
-    
 
 def get_scheduler(optimizer, scheduler_type):
     if scheduler_type == "ExponentialLR":
         return optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     elif scheduler_type == "MultiStepLR":
         return optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], gamma=0.9)
-    
+    elif scheduler_type == "CosineAnnealingLR":
+        return optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+
 def get_transform(transform):
     if transform:
         return torchvision.transforms.Compose([
             torchvision.transforms.RandomCrop(32, padding=4),
             torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.RandomRotation(10), 
+            torchvision.transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
+            torchvision.transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), 
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.4914, 0.4822, .4465), (0.2023, 0.1994, 0.2010)), # mean/std
+            AddGaussianNoise(mean=0.0, std=0.1),
         ])
     else:
         return torchvision.transforms.ToTensor()
-
-    
      
 def train(model, iterator, optimizer, criterion, device, scheduler=None):
     model.train()
@@ -57,37 +69,33 @@ def train(model, iterator, optimizer, criterion, device, scheduler=None):
     correct = 0
     total = 0
     for batch_idx, (inputs, targets) in enumerate(iterator):
-        print(f"Training Batch Index: {batch_idx}")
+        # print(f"Training Batch Index: {batch_idx}")
         optimizer.zero_grad()
         inputs = inputs.to(device)
         targets = targets.to(device)    
-
         outputs = model(inputs)
-        
-        
         loss = criterion(outputs, targets)
-        
         epoch_loss += loss.item()
         _, predicted = outputs.max(1)
         correct += predicted.eq(targets).sum().item()
         total += targets.size(0)
-        
         loss.backward()
         optimizer.step()
+
     if scheduler:
         scheduler.step()
             
     return epoch_loss / len(iterator), correct / total
 
-def test(model, iterator, criterion, device):
-    
+def test(model, iterator, criterion, device, epoch, args):
+    global best_acc
     # Q3c. Set up the evaluation function.
     epoch_loss = 0
     total = 0
     correct = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(iterator):
-            print(f"Evaluating Batch Index: {batch_idx}")
+            # print(f"Evaluating Batch Index: {batch_idx}")
             inputs = inputs.to(device)
             targets = targets.to(device)    
             
@@ -98,8 +106,22 @@ def test(model, iterator, criterion, device):
             correct += predicted.eq(targets).sum().item()
             total += targets.size(0)
             
-        
-    return epoch_loss / len(iterator), correct / total
+    accuracy = correct / total
+
+    # Save the model with best accuracy
+    if accuracy > best_acc:
+        print('Saving Model')
+        state = {
+            'net': model.state_dict(),
+            'acc': accuracy,
+            'epoch': epoch,
+        }
+        if not os.path.isdir('checkpoint'):
+            os.mkdir('checkpoint')
+
+        torch.save(model.state_dict(), f"./checkpoint/model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.pt")
+        best_acc = accuracy
+    return epoch_loss / len(iterator), accuracy
         
     
 
@@ -160,14 +182,11 @@ def main():
                 train_line = f"{epoch}, {train_loss}, {train_acc}\n"
                 train_outfile.write(train_line)
                 
-                test_loss, test_acc = test(model, testloader, criterion, device)
+                test_loss, test_acc = test(model, testloader, criterion, device, epoch, args)
                 test_line = f"{epoch}, {test_loss}, {test_acc}\n"
                 test_outfile.write(test_line)
                 
                 print(f"TRAIN ACC: {train_acc}, TEST ACC: {test_acc}")
-                
-    if (args.save):
-        torch.save(model.state_dict(), f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.pt")
     
 if __name__ == "__main__":
     main()

@@ -32,14 +32,12 @@ The following experiment options are available via command-line arguments:
 | --momentum | momentum | 0.9 | any float |
 | --weight-decay | weight decay | 5e-4 | any float |
 | --num-epochs | number of epochs | 10 | any int |
-| --scheduler | scheduler | None | None, ExponentialLR, MultiStepLR |
+| --scheduler | scheduler | None | None, ExponentialLR, MultiStepLR, CosineAnnealingLR |
 | --transform | transform | False | True, False |
-| --save | save | False | True, False |
 
+Note: The model with the best performance (based on accuracy) will be saved in `.pt` format here: 
 
-Note: `--save` will save a model in `.pt` format here: 
-
-    f"model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.pt"
+    f"./checkpoint/model_optimizer={args.optimizer}_lr={args.lr}_momentum={args.momentum}_weightdecay={args.weight_decay}_numepochs={args.num_epochs}_scheduler={args.scheduler}_transform={args.transform}.pt"
 
 
 ## Plotting Results
