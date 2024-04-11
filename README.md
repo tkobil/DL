@@ -32,7 +32,7 @@ The following experiment options are available via command-line arguments:
 | --momentum | momentum | 0.9 | any float |
 | --weight-decay | weight decay | 5e-4 | any float |
 | --num-epochs | number of epochs | 10 | any int |
-| --scheduler | scheduler | None | None, ExponentialLR, MultiStepLR |
+| --scheduler | scheduler | None | None, ExponentialLR, MultiStepLR, CosineAnnealingLR |
 | --transform | transform | False | True, False |
 | --save | save | False | True, False |
 
