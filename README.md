@@ -45,3 +45,9 @@ Note: The model with the best performance (based on accuracy) will be saved in `
 
 This will generate a plot `.png` file under `experiments/plots/` directory based off the
 test and train csv data.
+
+## Generating Labels on Unlabeled CIFAR data for Inference
+The `generate_cifar_nolabels_output.py` can be used to generate inference labels for unlabeled data in the `cifar_test_nolabels.pkl` file.  Note, this script is hard-coded to use 
+a certain model at runtime. Feel free to change the code below to point to any model in your local file system:
+
+    model.load_state_dict(torch.load('model_optimizer=SGD_lr=0.03_momentum=0.9_weightdecay=0.0005_numepochs=22_scheduler=ExpontentialLR_transform=True.pt'))
